@@ -1,9 +1,10 @@
 package com.loanbroker.authservice.model;
 
+
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -15,44 +16,55 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 public class User {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
-    @Column(name = "full_name", nullable = false, length = 100)
+    @Column(name = "full_name", length = 100, nullable = false)
     private String fullName;
 
-    @Column(nullable = false, unique = true, length = 100)
+    @Column(name = "email", length = 320, nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false, length = 255)
-    private String password;
+    @JsonIgnore
+    @Column(name = "password_hash", length = 255, nullable = false)
+    private String passwordHash;
 
-    @Column(name = "phone_number", nullable = false, length = 15)
+    @Column(name = "phone_number", length = 20, nullable = false)
     private String phoneNumber;
 
     @Column(nullable = false)
     private Boolean enabled = true;
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
 
-    // Relationships
+    @Column(nullable = false)
+    private Boolean deleted = false;
+
+    // Many-to-many with roles via user_roles join table
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
-            name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
+        name = "user_roles",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private Set<Role> roles = new HashSet<>();
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    private UserKyc userKyc;
+    @PrePersist
+    public void prePersist() {
+        Instant now = Instant.now();
+        this.createdAt = now;
+        this.updatedAt = now;
+        if (this.enabled == null) this.enabled = true;
+        if (this.deleted == null) this.deleted = false;
+    }
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private Set<MfaToken> mfaTokens = new HashSet<>();
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = Instant.now();
+    }
 }

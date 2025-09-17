@@ -1,10 +1,16 @@
 package com.loanbroker.authservice.model;
 
-import jakarta.persistence.*;
-import lombok.*;
-
-import java.util.HashSet;
-import java.util.Set;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "roles")
@@ -14,14 +20,13 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 public class Role {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
-    @Column(nullable = false, unique = true, length = 50)
+    @Column(length = 50, nullable = false, unique = true)
     private String name;
 
-    @ManyToMany(mappedBy = "roles")
-    private Set<User> users = new HashSet<>();
+    @Column(columnDefinition = "text")
+    private String description;
 }
